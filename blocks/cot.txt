@@ -1,0 +1,19 @@
+### COT
+
+Before producing the JSON output, think through the following steps:
+
+1. Identify assets and components: List all key processes, data stores, external entities, and interfaces in the system.  
+2. Map data flows: For each process, identify inputs, outputs, and any data crossing trust boundaries.  
+3. Analyze STRIDE categories:  
+   - Spoofing: Can any actor impersonate another actor or process?  
+   - Tampering: Can any data be modified maliciously during transmission or storage?  
+   - Repudiation: Can actions be denied or go unlogged?  
+   - Information Disclosure: Can sensitive information be exposed?  
+   - Denial of Service: Can system availability be disrupted?  
+   - Elevation of Privilege: Can a user gain higher privileges than intended?  
+4. Assess threat impact: For each identified threat, think about the potential consequences on system integrity, confidentiality, and availability.  
+5. Map mitigations: Consider relevant NIST 800-53 controls that could reduce or eliminate the risk.  
+6. Highlight gaps: Identify missing information in the application description that, if provided, would allow a more complete or precise threat analysis.  
+
+Important: This step is purely reasoning. Do not produce the JSON output yet — just internally analyze the system according to these steps. 
+Once complete, proceed to generate the structured JSON threat model as described in the main-content and few-shot blocks.

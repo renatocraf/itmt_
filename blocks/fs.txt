@@ -1,0 +1,90 @@
+### FEW-SHOT EXAMPLE:
+
+Input Example 1:
+
+Interaction:
+        Source: Load Balancer [External Entity]
+        Data Flow: Prompt Response [Data Flow]
+        Target: Validate JSON [Process]
+        Trust Boundary: Container Cluster ↔ Manager Application
+        Context: JSON Validation
+
+Expected JSON Output 1:
+
+{
+  "threat_model": [
+    {
+      "Category": "Elevation Of Privilege",
+      "Description": "Load Balancer may be able to remotely execute code for Validate JSON.",
+      "Justification": "Input Validation and Sanitization.",
+      "Potential Impact": "An attacker could gain unauthorized access to the Manager Application container environment, execute arbitrary code, escalate privileges within the cluster, and potentially pivot laterally to compromise additional services or sensitive data.",
+      "NIST_800_53_Controls": [
+        "SI-10: Information Input Validation",
+        "SC-39: Process Isolation",
+        "AC-6: Least Privilege"
+      ]
+    },
+    {
+      "Category": "Denial Of Service",
+      "Description": "Validate JSON crashes, halts, stops or runs slowly; in all cases violating an availability metric.",
+      "Justification": "Implement health checks (or liveness probes) for your manager processes. If a manager is detected as unhealthy or unresponsive, automatically restart the service and log the event for analysis.",
+      "Potential Impact": "Legitimate requests are delayed or dropped, degrading system performance and availability. This could cause the Manager Application to become unresponsive, impacting dependent services and potentially breaching SLAs.",
+      "NIST_800_53_Controls": [
+        "SI-13: Predictable Failure Prevention",
+        "SC-5: Denial-of-Service Protection",
+        "CP-10: System Recovery and Reconstitution"
+      ]
+    },
+    {
+      "Category": "Repudiation",
+      "Description": "Validate JSON claims that it did not receive data from a source outside the trust boundary. Consider using logging or auditing to record the source, time, and summary of the received data.",
+      "Justification": "Wait for Process Validate JSON acknowledgment (ACK). If no ACK is received, retransmit the package and log the attempt. To ensure non-repudiation, the system employs mutual TLS (mTLS) for authentication, and additionally uses digital signatures and trusted timestamps on logged transactions.",
+      "Potential Impact": "If repudiation occurs, malicious or faulty actors could deny responsibility for invalid or harmful requests. This undermines auditability, makes forensic investigations harder, and can lead to compliance violations.",
+      "NIST_800_53_Controls": [
+        "AU-2: Event Logging",
+        "AU-10: Non-Repudiation",
+        "AU-12: Audit Record Generation"
+      ]
+    }
+  ]
+}
+
+Input Example 2:
+
+Interaction:
+        Source: Query to RAG [Process]
+        Data Flow: Query [Data Flow]
+        Target: Document Models [Data Store]
+        Trust Boundary: Manager Application ↔ DB Cluster
+        Context: RAG Query
+
+Expected JSON Output 2:
+
+{
+  "threat_model": [
+    {
+      "Category": "Information Disclosure",
+      "Description": "Can you access Document Models and bypass the permissions for the object? For example by editing the files directly with a hex editor, or reaching it via filesharing? Ensure that your program is the only one that can access the data, and that all other subjects have to use your interface.",
+      "Justification": "Access is restricted to a defined range of authorized IP addresses. Only Read Permission.",
+      "Potential Impact": "Unauthorized exposure of sensitive Document Models could lead to leakage of proprietary or personal data, regulatory compliance violations, and loss of confidentiality. Attackers could gain insights into system behavior or exploit the data for further attacks.",
+      "NIST_800_53_Controls": [
+        "SC-28: Protection of Information at Rest",
+        "SC-31: Cryptographic Module Authentication",
+        "AC-3: Access Enforcement"
+      ]
+    },
+    {
+      "Category": "Tampering",
+      "Description": "Data flowing across Query may be tampered with by an attacker. This may lead to corruption of Document Models. Ensure the integrity of the data flow to the data store.",
+      "Justification": "Configure Postgres enabling TLS for secure data transit, PostgreSQL significantly helps mitigate tampering by enabling SSL/TLS for secure data transit, enforcing data types and constraints for schema validation and providing granular Role-Based Access Control (RBAC).",
+      "Potential Impact": "Tampered queries or corrupted Document Models can result in incorrect application behavior, compromised decision-making, data integrity loss, or system outages. This undermines trust in the system and may enable privilege escalation or injection attacks.",
+      "NIST_800_53_Controls": [
+        "SC-8: Transmission Confidentiality and Integrity",
+        "SI-7: Software, Firmware, and Information Integrity",
+        "AC-6: Least Privilege"
+      ]
+    }
+  ]
+}
+
+

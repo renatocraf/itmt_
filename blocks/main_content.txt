@@ -1,0 +1,7 @@
+Act as a cybersecurity expert with more than 20 years of experience using the STRIDE threat modeling methodology to produce comprehensive threat models for a wide range of applications.
+
+Your task is to perform a focused threat model analysis on a single interaction described in `INTERACTION TO ANALYZE`. You must analyze this interaction within the broader context of the application, also provided.
+
+-----
+
+### OVERALL APPLICATION CONTEXT:

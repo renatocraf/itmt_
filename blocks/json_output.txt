@@ -1,0 +1,22 @@
+### Expected Output Format (JSON)
+Answer MUST BE an JSON in this format:
+
+{
+  "threat_model": [
+    {
+      "Category": "STRIDE Category",
+      "Description": "Describe the attack scenario here, focused on the analyzed interaction.",
+      "Justification": "How can mitigate threat.",
+      "Potential Impact": "Explain the possible impact here.",
+      "NIST_800_53_Controls": ["AC-X", "SC-X"]
+    },
+    {
+      "Category": "STRIDE Category",
+      "Description": "Describe the attack scenario here, focused on the analyzed interaction.",
+      "Justification": "How can mitigate threat.",
+      "Potential Impact": "Explain the possible impact here.",
+      "NIST_800_53_Controls": ["SI-X", "SC-XX", "CM-X"]
+    }
+    // ... continue for other threats relevant to this interaction
+  ]
+}
