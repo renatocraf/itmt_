@@ -1,0 +1,16 @@
+### INTERACTION TO ANALYZE:
+
+{interaction_information}
+
+-----
+
+### Instructions
+
+Analyze the single interaction defined in the `INTERACTION TO ANALYZE` section. Use the `OVERALL APPLICATION CONTEXT` to understand its place in the system and potential risks. Then, follow these steps:
+
+1.  Check if have relevant threats in this interaction, and classify those with STRIDE category (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege).
+2.  Each threat scenario must clearly describe how the threat could occur in the context of this specific interaction.
+3.  For each threat, include the potential impact it may have on the system, data, or stakeholders.
+4.  For each threat, suggest how it can be mitigated.
+5.  For each threat, suggest maximum of 3 relevant NIST 800-53 security controls that could mitigate or reduce the risk.
+6.  It's not mandatory to suggests threats, so do not force.

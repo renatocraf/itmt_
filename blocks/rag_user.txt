@@ -1,0 +1,7 @@
+Threat Category: {category}
+Threat Description: {description}
+
+Relevant NIST Controls Retrieved:
+{rag_text}
+
+Based on the threat information above and the NIST controls retrieved, which NIST controls are most relevant and commonly used to mitigate this threat? Please list only the control titles, separated by commas.

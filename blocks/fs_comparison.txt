@@ -1,0 +1,41 @@
+### EXAMPLES OF THREAT COMPARISON:
+
+Example 1:
+TMT Description: "Elevation by Changing the Execution Flow in Authenticate User: An attacker may pass data into Authenticate User in order to change the flow of program execution within Authenticate User to the attacker's choosing."
+AI Description: "Privilege escalation via misconfigured role-based access: users may gain elevated permissions if role assignments or privilege checks are not properly enforced at the boundary."
+Result:
+{{
+    "is_similar": false,
+    "similarity_score": 0.10,
+    "explanation": "Both are Elevation of Privilege, but TMT describes code/execution-flow manipulation (e.g. injection) in a specific component, while the AI describes misconfiguration of roles and permissions. Different attack vectors and mechanisms."
+}}
+
+Example 2:
+TMT Description: "Potential Excessive Resource Consumption for Check Cache or Authentication Cache: Does Check Cache or Authentication Cache take explicit steps to control resource consumption? Resource consumption attacks can be hard to deal with, and there are times that it makes sense to let the OS do the job. Be careful that your resource requests don't deadlock, and that they do timeout."
+AI Description: "Application may become unresponsive or slow under high request load if connection pooling and request throttling are not implemented; no explicit limits on concurrent operations."
+Result:
+{{
+    "is_similar": false,
+    "similarity_score": 0.30,
+    "explanation": "Both relate to Denial of Service and resources: TMT focuses on cache/auth components, deadlock and timeout; AI focuses on general load, connection pooling and throttling. Overlap on 'resource/consumption' but different components and mitigations."
+}}
+
+Example 3:
+TMT Description: "Weak Authentication Scheme: Custom authentication schemes are susceptible to common weaknesses such as weak credential change management, credential equivalence, easily guessable credentials, null credentials, downgrade authentication or a weak credential change management system. Consider the impact and potential mitigations for your custom authentication scheme."
+AI Description: "Session fixation or weak session management: predictable or long-lived session tokens, or lack of invalidation on logout, may allow an attacker to hijack or reuse sessions and impersonate users."
+Result:
+{{
+    "is_similar": true,
+    "similarity_score": 0.60,
+    "explanation": "Both address authentication/identity (Spoofing): TMT on custom schemes and credentials; AI on session management and token security. Same security concern (who you are) but different layers (credentials vs. sessions)."
+}}
+
+Example 4:
+TMT Description: "Replay Attacks: Packets or messages without sequence numbers or timestamps can be captured and replayed in a wide variety of ways. Implement or utilize an existing communication protocol that supports anti-replay techniques (investigate sequence numbers before timers) and strong integrity."
+AI Description: "Captured requests or messages can be replayed to repeat actions; lack of nonces, sequence numbers or timestamps prevents detection of replay. Mitigation requires anti-replay (e.g. sequence numbers or nonces) and message integrity."
+Result:
+{{
+    "is_similar": true,
+    "similarity_score": 0.90,
+    "explanation": "Both describe the same Tampering/Replay concern: messages can be replayed, and anti-replay (sequence numbers/nonces/timestamps) plus integrity are needed. Wording and emphasis differ slightly; core threat and mitigations align."
+}}

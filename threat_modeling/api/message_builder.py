@@ -81,25 +81,9 @@ def generate_question(interaction_information: str) -> str:
     Returns:
         Formatted question string
     """
-    question = f'''### INTERACTION TO ANALYZE:
-
-{interaction_information}
-
------
-
-### Instructions
-
-Analyze the single interaction defined in the `INTERACTION TO ANALYZE` section. Use the `OVERALL APPLICATION CONTEXT` to understand its place in the system and potential risks. Then, follow these steps:
-
-1.  Check if have relevant threats in this interaction, and classify those with STRIDE category (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege).
-2.  Each threat scenario must clearly describe how the threat could occur in the context of this specific interaction.
-3.  For each threat, include the potential impact it may have on the system, data, or stakeholders.
-4.  For each threat, suggest how it can be mitigated.
-5.  For each threat, suggest maximum of 3 relevant NIST 800-53 security controls that could mitigate or reduce the risk.
-6.  It's not mandatory to suggests threats, so do not force.
-
-'''
-    return question
+    blocks_dir = get_blocks_dir()
+    template = get_message_from_file(f'{blocks_dir}/question_interaction.txt')
+    return template.format(interaction_information=interaction_information)
 
 
 def generate_messages(interactions: List[Dict]) -> List[HumanMessage]:
@@ -116,19 +100,17 @@ def generate_messages(interactions: List[Dict]) -> List[HumanMessage]:
     Returns:
         List of HumanMessage objects
     """
+    blocks_dir = get_blocks_dir()
+    interaction_template = get_message_from_file(f'{blocks_dir}/interaction_format.txt')
+    
     messages = []
     for interaction in interactions:
-        source = interaction['source']
-        data_flow = interaction['data_flow']
-        target = interaction['target']
-        trust_boundaries = interaction['trust_boundaries']
-        
-        organized_interaction = f'''Interaction:
-        Source: {source}
-        Data Flow: {data_flow}
-        Target: {target}
-        Trust Boundary: {trust_boundaries}
-          '''
+        organized_interaction = interaction_template.format(
+            source=interaction['source'],
+            data_flow=interaction['data_flow'],
+            target=interaction['target'],
+            trust_boundaries=interaction['trust_boundaries']
+        )
         
         question = generate_question(organized_interaction)
         message = HumanMessage(question)
@@ -144,20 +126,8 @@ def generate_system_prompt_rag() -> SystemMessage:
     Returns:
         SystemMessage with RAG instructions
     """
-    system_prompt = """You are a cybersecurity expert analyzing threats and recommending NIST controls.
-Given a threat description and relevant NIST controls retrieved from a knowledge base, identify which NIST controls are most relevant and commonly used to mitigate this specific threat.
-
-Provide a concise response listing the most relevant NIST control titles that should be applied to address this threat.
-Answer MUST BE an JSON in this format:
-{
-    "nist_controls": [
-        "NIST Control 1",
-        "NIST Control 2",
-        "NIST Control 3"
-    ]
-}
-"""
-    
+    blocks_dir = get_blocks_dir()
+    system_prompt = get_message_from_file(f'{blocks_dir}/rag_system.txt')
     return SystemMessage(content=system_prompt)
 
 
@@ -192,15 +162,13 @@ def generate_user_prompt_rag(category: str, description: str, rag_text: str) -> 
     Returns:
         Formatted user prompt string
     """
-    user_prompt = f"""Threat Category: {category}
-Threat Description: {description}
-
-Relevant NIST Controls Retrieved:
-{rag_text}
-
-Based on the threat information above and the NIST controls retrieved, which NIST controls are most relevant and commonly used to mitigate this threat? Please list only the control titles, separated by commas."""
-    
-    return user_prompt
+    blocks_dir = get_blocks_dir()
+    template = get_message_from_file(f'{blocks_dir}/rag_user.txt')
+    return template.format(
+        category=category,
+        description=description,
+        rag_text=rag_text
+    )
 
 
 def generate_rag_messages(category: str, description: str, rag_docs: List) -> List:
@@ -230,32 +198,11 @@ def generate_system_prompt_comparison() -> SystemMessage:
     Returns:
         SystemMessage with comparison instructions
     """
-    system_prompt = """You are a cybersecurity expert analyzing and comparing threat descriptions.
-Given two threat descriptions from different sources (TMT threat modeling tool and AI analysis), determine if they describe the same or similar security threat.
-
-Your task is to:
-1. Analyze both threat descriptions carefully
-2. Determine if they describe the same or similar security concern
-3. Provide a similarity score between 0.0 (completely different) and 1.0 (identical)
-4. Explain your reasoning clearly
-
-Consider:
-- Core security concern (what vulnerability/attack is being described)
-- Attack vector or method
-- Potential impact
-- Affected components or data flows
-
-Two threats should be considered similar if they address the same core security issue, even if the wording or specific details differ.
-
-Answer MUST BE a JSON in this format:
-{
-    "is_similar": true,
-    "similarity_score": 0.85,
-    "explanation": "Brief explanation of why they are similar or different"
-}
-"""
+    blocks_dir = get_blocks_dir()
+    system_prompt = get_message_from_file(f'{blocks_dir}/comparison_system.txt')
+    fs_comparison = get_message_from_file(f'{blocks_dir}/fs_comparison.txt')
     
-    return SystemMessage(content=system_prompt)
+    return SystemMessage(content=system_prompt + "\n\n" + fs_comparison)
 
 
 def generate_user_prompt_comparison(tmt_description: str, ai_description: str, category: str, dataflow_name: str) -> str:
@@ -271,20 +218,14 @@ def generate_user_prompt_comparison(tmt_description: str, ai_description: str, c
     Returns:
         Formatted user prompt string
     """
-    user_prompt = f"""Compare these two threat descriptions for the same dataflow and category:
-
-DataFlow Name: {dataflow_name}
-Category: {category}
-
-TMT Threat Description:
-{tmt_description}
-
-AI Analysis Threat Description:
-{ai_description}
-
-Are these two descriptions referring to the same or similar security threat? Provide your analysis."""
-    
-    return user_prompt
+    blocks_dir = get_blocks_dir()
+    template = get_message_from_file(f'{blocks_dir}/comparison_user.txt')
+    return template.format(
+        dataflow_name=dataflow_name,
+        category=category,
+        tmt_description=tmt_description,
+        ai_description=ai_description
+    )
 
 
 def generate_comparison_messages(tmt_description: str, ai_description: str, category: str, dataflow_name: str) -> List:

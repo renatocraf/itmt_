@@ -1,0 +1,5 @@
+Interaction:
+Source: {source}
+Data Flow: {data_flow}
+Target: {target}
+Trust Boundary: {trust_boundaries}

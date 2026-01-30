@@ -49,6 +49,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Function to show spinner overlay
+    function showSpinner(loadingText) {
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner-overlay';
+        spinner.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border spinner-border-lg text-light mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div class="text-light fw-bold">${loadingText}</div>
+            </div>
+        `;
+        document.body.appendChild(spinner);
+    }
+
     // Show spinner on form submission
     document.addEventListener('submit', function(e) {
         const form = e.target;
@@ -61,18 +76,16 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingText = "Enhancing with RAG. Please wait...";
         }
 
-        const spinner = document.createElement('div');
-        spinner.className = 'spinner-overlay';
-        spinner.innerHTML = `
-            <div class="text-center">
-                <div class="spinner-border spinner-border-lg text-light mb-3" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <div class="text-light fw-bold">${loadingText}</div>
-            </div>
-        `;
-        document.body.appendChild(spinner);
+        showSpinner(loadingText);
     });
+
+    // Show spinner on Compare with TMT click
+    const compareBtn = document.getElementById('compareTmtBtn');
+    if (compareBtn) {
+        compareBtn.addEventListener('click', function() {
+            showSpinner("Comparing threats with TMT. Please wait...");
+        });
+    }
 
     // Auto-hide alerts after 5 seconds
     const alerts = document.querySelectorAll('.alert');

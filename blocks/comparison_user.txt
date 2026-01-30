@@ -1,0 +1,12 @@
+Compare these two threat descriptions for the same dataflow and category:
+
+DataFlow Name: {dataflow_name}
+Category: {category}
+
+TMT Threat Description:
+{tmt_description}
+
+AI Analysis Threat Description:
+{ai_description}
+
+Are these two descriptions referring to the same or similar security threat? Provide your analysis.
