@@ -28,6 +28,21 @@ def index():
     if request.method == 'POST':
         if form.validate_on_submit():
             try:
+                # Clear previous session data for new upload
+                keys_to_clear = [
+                    'threat_model_data', 'json_data', 'threat_data', 
+                    'selected_diagram_index', 'analysis_ready', 
+                    'analysis_results', 'analysis_df', 'analysis_complete',
+                    'analysis_df_rag', 'rag_complete', 'system_description', 'file_name', 'xml_content'
+                ]
+                for key in keys_to_clear:
+                    session.pop(key, None)
+                
+                # Clear dynamic comparison keys
+                for key in list(session.keys()):
+                    if key.startswith('comparison_'):
+                        session.pop(key, None)
+
                 # Process uploaded file
                 uploaded_file = form.tm7_file.data
                 system_description = form.system_description.data
@@ -85,7 +100,7 @@ def index():
                 session['analysis_ready'] = True
                 
                 flash('File processed successfully!', 'success')
-                return redirect(url_for('main.analyze'))
+                return redirect(url_for('main.select_diagram'))
                 
             except Exception as e:
                 flash(f'Error processing file: {str(e)}', 'error')

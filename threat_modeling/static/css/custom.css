@@ -1,103 +1,157 @@
 /* Custom CSS for Threat Modeling Tool */
 
+:root {
+    --ita-blue: #1a3a5f;
+    --ita-blue-light: #2c5282;
+    --ita-accent: #3182ce;
+    --ita-success: #38a169;
+    --ita-warning: #ecc94b;
+    --ita-danger: #e53e3e;
+    --ita-bg: #f7fafc;
+    --ita-text: #2d3748;
+    --ita-border: #e2e8f0;
+}
+
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background-color: var(--ita-bg);
+    color: var(--ita-text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Header Styles */
+.ita-header {
+    background-color: white;
+    border-bottom: 1px solid var(--ita-border);
+    padding: 1rem 0;
+}
+
+.ita-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--ita-blue);
+    margin: 0;
+}
+
+/* Stepper Styles */
+.stepper-container {
+    background-color: white;
+    border-bottom: 1px solid var(--ita-border);
+    padding: 1.5rem 0;
+    margin-bottom: 2rem;
+}
+
+.stepper-list {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.stepper-item {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    padding: 0 10px;
+}
+
+.stepper-link {
+    text-decoration: none;
+    color: #a0aec0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.stepper-link:hover {
+    color: var(--ita-blue-light);
+}
+
+.stepper-item.active .stepper-link {
+    color: var(--ita-blue);
+}
+
+.stepper-item.completed .stepper-link {
+    color: var(--ita-success);
+}
+
+.stepper-box {
+    width: 100%;
+    padding: 12px 8px;
+    border: 2px solid var(--ita-border);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background-color: white;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60px;
+}
+
+.stepper-item.active .stepper-box {
+    border-color: var(--ita-blue);
+    background-color: rgba(26, 58, 95, 0.05);
+}
+
+.stepper-item.completed .stepper-box {
+    border-color: var(--ita-success);
+    background-color: rgba(56, 161, 105, 0.05);
+}
+
+.stepper-arrow {
+    color: var(--ita-border);
+    font-size: 1.5rem;
+    padding: 0 10px;
+}
+
+.stepper-item.disabled .stepper-link {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.stepper-item.disabled .stepper-link:hover {
+    color: #a0aec0;
 }
 
 main {
     flex: 1;
 }
 
+.card {
+    border: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-radius: 12px;
+}
+
+.card-header {
+    background-color: white;
+    border-bottom: 1px solid var(--ita-border);
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+}
+
 .upload-area {
-    border: 2px dashed #dee2e6;
-    border-radius: 8px;
-    padding: 2rem;
+    border: 2px dashed var(--ita-border);
+    border-radius: 12px;
     text-align: center;
-    transition: border-color 0.3s;
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
 
 .upload-area:hover {
-    border-color: #0d6efd;
-}
-
-.upload-area.dragover {
-    border-color: #0d6efd;
-    background-color: #f8f9fa;
-}
-
-.file-info {
-    background-color: #f8f9fa;
-    padding: 1rem;
-    border-radius: 4px;
-    margin-top: 1rem;
-}
-
-.results-table {
-    max-height: 600px;
-    overflow-y: auto;
-}
-
-.metric-card {
-    text-align: center;
-    padding: 1rem;
-    border-radius: 8px;
-    background-color: #f8f9fa;
-}
-
-.spinner-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-}
-
-.spinner-border-lg {
-    width: 3rem;
-    height: 3rem;
-}
-
-/* Diagram Preview Styles */
-.diagram-preview-card {
-    transition: all 0.3s ease;
-}
-
-.diagram-preview-card:hover {
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.summary-card {
-    transition: transform 0.2s ease;
-}
-
-.summary-card:hover {
-    transform: translateY(-5px);
-}
-
-.dataflows-table {
-    font-size: 0.9rem;
-}
-
-.dataflows-table tbody tr {
-    transition: background-color 0.2s ease;
-}
-
-.dataflows-table tbody tr:hover {
-    background-color: #f8f9fa;
-}
-
-.dataflows-table code {
-    background-color: #e9ecef;
-    padding: 2px 6px;
-    border-radius: 3px;
-    font-size: 0.85em;
+    border-color: var(--ita-blue);
+    background-color: rgba(49, 130, 206, 0.02);
 }
 
 .trust-boundary-badge {
@@ -108,5 +162,34 @@ main {
     border-radius: 12px;
     font-size: 0.8em;
     margin: 2px;
+}
+
+.bg-light-primary { background-color: rgba(49, 130, 206, 0.05); }
+.bg-light-success { background-color: rgba(56, 161, 105, 0.05); }
+.bg-light-warning { background-color: rgba(236, 201, 75, 0.05); }
+.bg-light-danger { background-color: rgba(229, 62, 62, 0.05); }
+
+.results-table {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner-border-lg {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-width: 0.3em;
 }
 

@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}ITA Threat Modeling Tool{% endblock %}</title>
     
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -15,27 +20,69 @@
     {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">
-                <i class="bi bi-shield-check"></i> ITA Threat Modeling Tool
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">Home</a>
-                    </li>
-                </ul>
+    <!-- Header -->
+    <header class="ita-header">
+        <div class="container-fluid px-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-shield-lock-fill text-primary fs-3 me-3"></i>
+                <h1>ITA Threat Modeling Tool</h1>
             </div>
+        </div>
+    </header>
+
+    <!-- Stepper Navigation -->
+    <nav class="stepper-container" aria-label="Progress">
+        <div class="container-fluid px-4">
+            <ol class="stepper-list">
+                <li class="stepper-item {% if step_active == 1 %}active{% endif %} {% if session.get('xml_content') %}completed{% endif %}">
+                    <a href="{{ url_for('main.index') }}" class="stepper-link">
+                        <div class="stepper-box">
+                            <span>Threat Model File Upload</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="stepper-arrow"><i class="bi bi-chevron-right"></i></li>
+                
+                <li class="stepper-item {% if step_active == 2 %}active{% endif %} {% if session.get('analysis_ready') %}completed{% endif %} {% if not session.get('xml_content') %}disabled{% endif %}">
+                    <a href="{% if session.get('xml_content') %}{{ url_for('main.select_diagram') }}{% else %}#{% endif %}" class="stepper-link">
+                        <div class="stepper-box">
+                            <span>Diagrams</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="stepper-arrow"><i class="bi bi-chevron-right"></i></li>
+                
+                <li class="stepper-item {% if step_active == 3 %}active{% endif %} {% if session.get('analysis_complete') %}completed{% endif %} {% if not session.get('analysis_ready') %}disabled{% endif %}">
+                    <a href="{% if session.get('analysis_ready') %}{{ url_for('main.analyze') }}{% else %}#{% endif %}" class="stepper-link">
+                        <div class="stepper-box">
+                            <span>Analysis Configuration</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="stepper-arrow"><i class="bi bi-chevron-right"></i></li>
+                
+                <li class="stepper-item {% if step_active == 4 %}active{% endif %} {% if session.get('analysis_complete') %}completed{% endif %} {% if not session.get('analysis_complete') %}disabled{% endif %}">
+                    <a href="{% if session.get('analysis_complete') %}{{ url_for('main.results') }}{% else %}#{% endif %}" class="stepper-link">
+                        <div class="stepper-box">
+                            <span>Analysis</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="stepper-arrow"><i class="bi bi-chevron-right"></i></li>
+                
+                <li class="stepper-item {% if step_active == 5 %}active{% endif %} {% if session.get('rag_complete') %}completed{% endif %} {% if not session.get('analysis_complete') %}disabled{% endif %}">
+                    <a href="{% if session.get('analysis_complete') %}{{ url_for('main.results', _anchor='rag') }}{% else %}#{% endif %}" class="stepper-link">
+                        <div class="stepper-box">
+                            <span>RAG</span>
+                        </div>
+                    </a>
+                </li>
+            </ol>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="container-fluid mt-4">
+    <main class="container-fluid px-4">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -51,7 +98,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="mt-5 py-3 bg-light">
+    <footer class="mt-5 py-4 border-top bg-white">
         <div class="container-fluid text-center text-muted">
             <small>ITA Threat Modeling Tool - POC | Security by Design</small>
         </div>
@@ -65,4 +112,3 @@
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>
-

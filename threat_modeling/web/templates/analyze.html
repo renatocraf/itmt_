@@ -1,107 +1,126 @@
 {% extends "base.html" %}
 
+{% set step_active = 3 %}
+
 {% block title %}Configure Analysis - ITA Threat Modeling Tool{% endblock %}
 
 {% block content %}
 <div class="row">
-    <div class="col-12">
-        <h2 class="mb-4"><i class="bi bi-robot"></i> AI Threat Analysis</h2>
-        <hr>
+    <div class="col-12 mb-4">
+        <h2 class="h4 fw-bold"><i class="bi bi-robot me-2 text-primary"></i> Analysis Configuration</h2>
+        <p class="text-muted">Select your AI provider and configure the model for threat analysis.</p>
     </div>
 </div>
 
 <div class="row">
     <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5>Analysis Configuration</h5>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Model Settings</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <form method="POST" id="analysisForm">
                     {{ form.hidden_tag() }}
                     
-                    <!-- Step 1: Provider Selection -->
-                    <div class="mb-3">
-                        <label for="provider" class="form-label">
-                            <i class="bi bi-cloud"></i> 1. AI Provider
-                        </label>
-                        {{ form.provider(class="form-select", id="provider") }}
-                        {% if form.provider.errors %}
-                            <div class="text-danger small">
-                                {% for error in form.provider.errors %}
-                                    <div>{{ error }}</div>
-                                {% endfor %}
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <!-- Step 1: Provider Selection -->
+                            <div class="mb-3">
+                                <label for="provider" class="form-label fw-bold">
+                                    <i class="bi bi-cloud me-2 text-primary"></i> 1. AI Provider
+                                </label>
+                                {{ form.provider(class="form-select form-select-lg", id="provider") }}
+                                {% if form.provider.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.provider.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Select the AI provider you want to use</small>
                             </div>
-                        {% endif %}
-                        <small class="form-text text-muted">Select the AI provider you want to use</small>
-                    </div>
-                    
-                    <!-- Step 2: API Key -->
-                    <div class="mb-3" id="api_key_group" style="display: none;">
-                        <label for="api_key" class="form-label">
-                            <i class="bi bi-key"></i> 2. API Key
-                        </label>
-                        {{ form.api_key(class="form-control", id="api_key", placeholder="Enter your API key") }}
-                        {% if form.api_key.errors %}
-                            <div class="text-danger small">
-                                {% for error in form.api_key.errors %}
-                                    <div>{{ error }}</div>
-                                {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Step 2: API Key -->
+                            <div class="mb-3" id="api_key_group" style="display: none;">
+                                <label for="api_key" class="form-label fw-bold">
+                                    <i class="bi bi-key me-2 text-primary"></i> 2. API Key
+                                </label>
+                                {{ form.api_key(class="form-control form-control-lg", id="api_key", type="password", placeholder="Enter your API key") }}
+                                {% if form.api_key.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.api_key.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Fetch Models Button -->
+                                <div class="mt-2 d-flex align-items-center">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" id="fetchModelsBtn" disabled>
+                                        <i class="bi bi-search me-1"></i> Find Models
+                                    </button>
+                                    <span id="fetchStatus" class="ms-2 small"></span>
+                                </div>
                             </div>
-                        {% endif %}
-                        <small class="form-text text-muted">Enter your API key for the selected provider</small>
-                        
-                        <!-- Fetch Models Button -->
-                        <div class="mt-2">
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="fetchModelsBtn" disabled>
-                                <i class="bi bi-search"></i> Find Models
-                            </button>
-                            <span id="fetchStatus" class="ms-2"></span>
                         </div>
                     </div>
                     
-                    <!-- Step 3: Model Selection -->
-                    <div class="mb-3" id="model_group" style="display: none;">
-                        <label for="model" class="form-label">
-                            <i class="bi bi-cpu"></i> 3. AI Model
-                        </label>
-                        {{ form.model(class="form-select", id="model", disabled=True) }}
-                        {% if form.model.errors %}
-                            <div class="text-danger small">
-                                {% for error in form.model.errors %}
-                                    <div>{{ error }}</div>
-                                {% endfor %}
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <!-- Step 3: Model Selection -->
+                            <div class="mb-3" id="model_group" style="display: none;">
+                                <label for="model" class="form-label fw-bold">
+                                    <i class="bi bi-cpu me-2 text-primary"></i> 3. AI Model
+                                </label>
+                                {{ form.model(class="form-select form-select-lg", id="model", disabled=True) }}
+                                {% if form.model.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.model.errors %}
+                                            <div>{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="form-text text-muted">Select the model to use for analysis</small>
                             </div>
-                        {% endif %}
-                        <small class="form-text text-muted">Select the model to use for analysis</small>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Prompt Enhancements -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">
+                                    <i class="bi bi-magic me-2 text-primary"></i> 4. Enhancements
+                                </label>
+                                <div class="card bg-light border-0">
+                                    <div class="card-body p-3">
+                                        <div class="form-check mb-2">
+                                            {{ form.few_shot(class="form-check-input", id="few_shot") }}
+                                            <label class="form-check-label fw-medium" for="few_shot">
+                                                Few Shot Examples
+                                            </label>
+                                            <small class="form-text text-muted d-block">Improves accuracy with examples</small>
+                                        </div>
+                                        <div class="form-check">
+                                            {{ form.chain_of_thoughts(class="form-check-input", id="chain_of_thoughts") }}
+                                            <label class="form-check-label fw-medium" for="chain_of_thoughts">
+                                                Chain of Thoughts
+                                            </label>
+                                            <small class="form-text text-muted d-block">Model explains its reasoning</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- Prompt Enhancements -->
-                    <div class="mb-3">
-                        <label class="form-label">Prompt Enhancements</label>
-                        <div class="form-check">
-                            {{ form.few_shot(class="form-check-input", id="few_shot") }}
-                            <label class="form-check-label" for="few_shot">
-                                Few Shot
-                            </label>
-                            <small class="form-text text-muted d-block">Add few-shot examples to improve model performance</small>
-                        </div>
-                        <div class="form-check">
-                            {{ form.chain_of_thoughts(class="form-check-input", id="chain_of_thoughts") }}
-                            <label class="form-check-label" for="chain_of_thoughts">
-                                Chain of Thoughts
-                            </label>
-                            <small class="form-text text-muted d-block">Enable step-by-step reasoning for better analysis</small>
-                        </div>
-                    </div>
+                    <hr class="my-4">
                     
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg" id="runAnalysisBtn" disabled>
-                            <i class="bi bi-play-circle"></i> Run AI Analysis
+                        <button type="submit" class="btn btn-primary btn-lg py-3 fw-bold" id="runAnalysisBtn" disabled>
+                            <i class="bi bi-play-circle me-2"></i> Run AI Analysis
                         </button>
-                        <small class="form-text text-muted text-center mt-2" id="runAnalysisHint">
-                            Please select a provider, enter API key, fetch models, and select a model to enable analysis
-                        </small>
+                        <div id="runAnalysisHint" class="text-center mt-3 small text-muted">
+                            Please select a provider and enter an API key to begin.
+                        </div>
                     </div>
                 </form>
             </div>
@@ -109,31 +128,38 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card mb-3">
-            <div class="card-header">
-                <h6>Analysis Info</h6>
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">Selected Configuration</h6>
             </div>
             <div class="card-body">
-                <div class="metric-card mb-2">
-                    <strong>Provider:</strong><br>
-                    <span id="provider_display">Not selected</span>
+                <div class="mb-3">
+                    <label class="text-muted small text-uppercase fw-bold d-block mb-1">Provider</label>
+                    <div id="provider_display" class="fw-bold text-primary">Not selected</div>
                 </div>
-                <div class="metric-card mb-2">
-                    <strong>Model:</strong><br>
-                    <span id="model_display">Not selected</span>
+                <div class="mb-3">
+                    <label class="text-muted small text-uppercase fw-bold d-block mb-1">Model</label>
+                    <div id="model_display" class="fw-bold text-primary">Not selected</div>
                 </div>
-                {% if threat_model_data %}
-                <div class="metric-card mb-2">
-                    <strong>Diagrams:</strong><br>
-                    {{ threat_model_data.num_diagrams }}
+                
+                <hr>
+                
+                <div class="mb-3">
+                    <label class="text-muted small text-uppercase fw-bold d-block mb-1">Threat Model Context</label>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small">Diagrams:</span>
+                        <span class="badge bg-light text-dark border">{{ threat_model_data.num_diagrams if threat_model_data else 0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="small">TMT Threats:</span>
+                        <span class="badge bg-light text-dark border">{{ threat_model_data.num_threats if threat_model_data else 0 }}</span>
+                    </div>
                 </div>
-                {% endif %}
-                {% if threat_data %}
-                <div class="metric-card">
-                    <strong>Threats Detected:</strong><br>
-                    {{ threat_model_data.num_threats if threat_model_data else 'N/A' }}
+                
+                <div class="alert alert-warning border-0 bg-light-warning small mb-0">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Analysis can take up to a minute depending on the model and number of data flows.
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -153,44 +179,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const runAnalysisBtn = document.getElementById('runAnalysisBtn');
     const providerDisplay = document.getElementById('provider_display');
     const modelDisplay = document.getElementById('model_display');
+    const runAnalysisHint = document.getElementById('runAnalysisHint');
     
-    // Function to validate and enable/disable Run Analysis button
     function validateRunAnalysisButton() {
         const provider = providerSelect.value && providerSelect.value !== '';
         const apiKey = apiKeyInput.value.trim();
         const model = modelSelect.value && modelSelect.value !== '';
-        const modelsLoaded = !modelSelect.disabled && modelSelect.options.length > 1; // More than just placeholder
+        const modelsLoaded = !modelSelect.disabled && modelSelect.options.length > 1;
         
         const isValid = provider && apiKey && modelsLoaded && model;
-        
         runAnalysisBtn.disabled = !isValid;
         
-        // Update hint message
-        const hintElement = document.getElementById('runAnalysisHint');
-        if (hintElement) {
-            if (!provider) {
-                hintElement.textContent = 'Please select a provider';
-                hintElement.className = 'form-text text-muted text-center mt-2';
-            } else if (!apiKey) {
-                hintElement.textContent = 'Please enter your API key';
-                hintElement.className = 'form-text text-muted text-center mt-2';
-            } else if (!modelsLoaded) {
-                hintElement.textContent = 'Please click "Buscar Modelos" to load available models';
-                hintElement.className = 'form-text text-muted text-center mt-2';
-            } else if (!model) {
-                hintElement.textContent = 'Please select a model from the list';
-                hintElement.className = 'form-text text-muted text-center mt-2';
-            } else {
-                hintElement.textContent = 'Ready to run analysis with ' + model + '!';
-                hintElement.className = 'form-text text-success text-center mt-2';
-            }
+        if (!provider) {
+            runAnalysisHint.textContent = 'Please select a provider';
+            runAnalysisHint.className = 'text-center mt-3 small text-muted';
+        } else if (!apiKey) {
+            runAnalysisHint.textContent = 'Please enter your API key';
+            runAnalysisHint.className = 'text-center mt-3 small text-muted';
+        } else if (!modelsLoaded) {
+            runAnalysisHint.textContent = 'Please click "Find Models" to load available models';
+            runAnalysisHint.className = 'text-center mt-3 small text-muted';
+        } else if (!model) {
+            runAnalysisHint.textContent = 'Please select a model from the list';
+            runAnalysisHint.className = 'text-center mt-3 small text-muted';
+        } else {
+            runAnalysisHint.textContent = 'Ready to run analysis with ' + model + '!';
+            runAnalysisHint.className = 'text-center mt-3 small text-success fw-bold';
         }
     }
     
-    // Handle provider selection
     providerSelect.addEventListener('change', function() {
         const provider = this.value;
-        
         if (provider && provider !== '') {
             apiKeyGroup.style.display = 'block';
             providerDisplay.textContent = provider;
@@ -199,50 +218,34 @@ document.addEventListener('DOMContentLoaded', function() {
             apiKeyGroup.style.display = 'none';
             modelGroup.style.display = 'none';
             modelSelect.disabled = true;
-            modelSelect.innerHTML = '<option value="">Select provider and fetch models first...</option>';
+            modelSelect.innerHTML = '<option value="">Select provider first...</option>';
             providerDisplay.textContent = 'Not selected';
             modelDisplay.textContent = 'Not selected';
         }
         validateRunAnalysisButton();
     });
     
-    // Handle API key input
     apiKeyInput.addEventListener('input', function() {
         const hasProvider = providerSelect.value && providerSelect.value !== '';
         fetchModelsBtn.disabled = !hasProvider || !this.value.trim();
         validateRunAnalysisButton();
     });
     
-    // Fetch models button
     fetchModelsBtn.addEventListener('click', function() {
         const provider = providerSelect.value;
         const apiKey = apiKeyInput.value.trim();
         
-        if (!provider || !apiKey) {
-            fetchStatus.innerHTML = '<span class="text-danger">Please select provider and enter API key</span>';
-            validateRunAnalysisButton();
-            return;
-        }
-        
-        // Disable button and show loading
         fetchModelsBtn.disabled = true;
-        fetchStatus.innerHTML = '<span class="text-info"><i class="bi bi-hourglass-split"></i> Fetching models...</span>';
+        fetchStatus.innerHTML = '<span class="text-primary"><i class="bi bi-hourglass-split"></i> Fetching...</span>';
         
-        // Fetch models
         fetch('/api/list-models', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                provider: provider,
-                api_key: apiKey
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider: provider, api_key: apiKey })
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Populate model select
                 modelSelect.innerHTML = '<option value="">Select a model...</option>';
                 data.models.forEach(model => {
                     const option = document.createElement('option');
@@ -251,87 +254,31 @@ document.addEventListener('DOMContentLoaded', function() {
                     modelSelect.appendChild(option);
                 });
                 
-                // Show model select and enable it
                 modelGroup.style.display = 'block';
                 modelSelect.disabled = false;
-                
-                fetchStatus.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Models loaded</span>';
-                
-                // Clear status after 3 seconds
-                setTimeout(() => {
-                    fetchStatus.innerHTML = '';
-                }, 3000);
-                
-                // Validate button state after models are loaded
+                fetchStatus.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Loaded</span>';
+                setTimeout(() => { fetchStatus.innerHTML = ''; }, 3000);
                 validateRunAnalysisButton();
             } else {
-                fetchStatus.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle"></i> ${data.error}</span>`;
+                fetchStatus.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle"></i> Error</span>`;
+                alert('Error fetching models: ' + data.error);
                 fetchModelsBtn.disabled = false;
-                validateRunAnalysisButton();
             }
         })
         .catch(error => {
-            fetchStatus.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle"></i> Error: ${error.message}</span>`;
+            fetchStatus.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle"></i> Error</span>`;
             fetchModelsBtn.disabled = false;
-            validateRunAnalysisButton();
         });
     });
     
-    // Handle model selection
     modelSelect.addEventListener('change', function() {
         const model = this.value;
-        if (model && model !== '') {
-            modelDisplay.textContent = model;
-        } else {
-            modelDisplay.textContent = 'Not selected';
-        }
+        modelDisplay.textContent = model || 'Not selected';
         validateRunAnalysisButton();
     });
     
-    // Prevent form submission if button is disabled or validation fails
-    document.getElementById('analysisForm').addEventListener('submit', function(e) {
-        if (runAnalysisBtn.disabled) {
-            e.preventDefault();
-            alert('Please complete all required steps: select provider, enter API key, fetch models, and select a model.');
-            return false;
-        }
-        
-        // Additional validation before submit
-        const provider = providerSelect.value;
-        const apiKey = apiKeyInput.value.trim();
-        const model = modelSelect.value;
-        
-        if (!provider || !apiKey || !model) {
-            e.preventDefault();
-            alert('Please ensure provider, API key, and model are all selected.');
-            return false;
-        }
-        
-        // Ensure model is from the loaded list
-        const modelOption = modelSelect.querySelector(`option[value="${model}"]`);
-        if (!modelOption || modelOption.value === '') {
-            e.preventDefault();
-            alert('Please select a valid model from the list.');
-            return false;
-        }
-        
-        // Enable the model select before submission (disabled fields are not submitted)
-        if (modelSelect.disabled) {
-            modelSelect.disabled = false;
-        }
-        
-        // Ensure all fields have the correct name attributes
-        if (!modelSelect.getAttribute('name')) {
-            modelSelect.setAttribute('name', 'model');
-        }
-    });
-    
-    // Initialize display and validation
     if (providerSelect.value) {
         providerSelect.dispatchEvent(new Event('change'));
-    }
-    if (modelSelect.value) {
-        modelSelect.dispatchEvent(new Event('change'));
     }
     validateRunAnalysisButton();
 });

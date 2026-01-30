@@ -50,20 +50,30 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Show spinner on form submission
-    const forms = document.querySelectorAll('form');
-    forms.forEach(form => {
-        form.addEventListener('submit', function() {
-            const spinner = document.createElement('div');
-            spinner.className = 'spinner-overlay';
-            spinner.innerHTML = `
-                <div class="spinner-border spinner-border-lg text-light" role="status">
+    document.addEventListener('submit', function(e) {
+        const form = e.target;
+        if (form.tagName !== 'FORM') return;
+
+        let loadingText = "Loading...";
+        if (form.id === 'analysisForm') {
+            loadingText = "Performing Analysis. This may take a few minutes.";
+        } else if (form.action && form.action.includes('rag-enhance')) {
+            loadingText = "Enhancing with RAG. Please wait...";
+        }
+
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner-overlay';
+        spinner.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border spinner-border-lg text-light mb-3" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-            `;
-            document.body.appendChild(spinner);
-        });
+                <div class="text-light fw-bold">${loadingText}</div>
+            </div>
+        `;
+        document.body.appendChild(spinner);
     });
-    
+
     // Auto-hide alerts after 5 seconds
     const alerts = document.querySelectorAll('.alert');
     alerts.forEach(alert => {
