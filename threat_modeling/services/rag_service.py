@@ -85,6 +85,24 @@ class RAGService:
             "google": "nist_controls_google",
         }
         return collection_map.get(provider_lower, RAG_COLLECTION_NAME)
+
+    def check_chromadb_connection(self) -> tuple[bool, str]:
+        """
+        Try to connect to ChromaDB (heartbeat). Use before running RAG to fail fast with a friendly message.
+
+        Returns:
+            Tuple (success: bool, error_message: str). If success is True, error_message is empty.
+        """
+        try:
+            client = chromadb.HttpClient(
+                host=RAG_CHROMA_HOST,
+                port=RAG_CHROMA_PORT,
+                ssl=RAG_CHROMA_SSL,
+            )
+            client.heartbeat()
+            return True, ""
+        except Exception as e:
+            return False, str(e)
     
     def _get_vector_store(self) -> Chroma:
         """

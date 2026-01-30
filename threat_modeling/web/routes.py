@@ -509,6 +509,14 @@ def rag_enhance():
         
         # Initialize RAG service and LLM client
         rag_service = RAGService(provider=rag_provider, api_key=rag_api_key)
+        chroma_ok, chroma_error = rag_service.check_chromadb_connection()
+        if not chroma_ok:
+            flash(
+                'Could not connect to ChromaDB. Please ensure the service is running '
+                '(e.g. Docker or chroma run --path ./nist-data) and that host/port are correct in your environment variables.',
+                'error',
+            )
+            return redirect(url_for('main.results'))
         llm_client = LLMClient(
             provider=rag_provider,
             model_name=rag_model,

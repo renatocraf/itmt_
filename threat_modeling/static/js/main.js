@@ -74,13 +74,13 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(spinner);
     });
 
-    // Auto-hide alerts after 5 seconds
-    const alerts = document.querySelectorAll('.alert');
-    alerts.forEach(alert => {
-        setTimeout(() => {
-            const bsAlert = new bootstrap.Alert(alert);
+    // Auto-dismiss flash messages after configured time (default 5s)
+    document.querySelectorAll('[data-auto-dismiss]').forEach(function(el) {
+        var ms = parseInt(el.getAttribute('data-auto-dismiss'), 10) || 10000;
+        setTimeout(function() {
+            var bsAlert = bootstrap.Alert.getOrCreateInstance(el);
             bsAlert.close();
-        }, 5000);
+        }, ms);
     });
     
     // Toggle API key field based on model selection
