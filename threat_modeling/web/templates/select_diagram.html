@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}Select Diagram - ITA Threat Modeling Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="bi bi-diagram-3"></i> Select Diagram</h2>
+        <p class="lead">Multiple diagrams found. Please select which diagram to analyze.</p>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h5>Available Diagrams</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="diagram_index" class="form-label">Choose the diagram to analyze:</label>
+                        <select name="diagram_index" id="diagram_index" class="form-select" required>
+                            {% for diagram in threat_model_data.diagrams %}
+                                <option value="{{ diagram.index }}">{{ diagram.name }} (ID: {{ diagram.index }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Diagram Preview Section -->
+                    <div id="json_preview_section" class="mb-3" style="display: none;">
+                        <label class="form-label"><i class="bi bi-eye"></i> Diagram Preview:</label>
+                        <div class="card border-primary diagram-preview-card">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="bi bi-diagram-3"></i> <span id="diagram_name_text"></span></h6>
+                            </div>
+                            <div class="card-body">
+                                <!-- Summary Cards -->
+                                <div id="summary_cards" class="row mb-4">
+                                    <!-- Will be populated by JavaScript -->
+                                </div>
+                                
+                                <!-- Data Flows Table -->
+                                <div id="dataflows_section">
+                                    <h6 class="mb-3 border-bottom pb-2">
+                                        <i class="bi bi-arrow-left-right text-primary"></i> 
+                                        <strong>Data Flows</strong>
+                                    </h6>
+                                    <div id="dataflows_table" class="table-responsive dataflows-table" style="max-height: 400px; overflow-y: auto;">
+                                        <!-- Will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Raw JSON Toggle -->
+                                <div class="mt-4 pt-3 border-top">
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#rawJsonCollapse" aria-expanded="false">
+                                        <i class="bi bi-code-slash"></i> Show Raw JSON
+                                    </button>
+                                    <div class="collapse mt-2" id="rawJsonCollapse">
+                                        <div class="card bg-light">
+                                            <div class="card-body p-2">
+                                                <pre class="mb-0" style="max-height: 300px; overflow-y: auto; font-size: 0.75rem;"><code id="json_preview" class="language-json"></code></pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.index') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Select Diagram</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Threats Detected by TMT Section - Independent -->
+<div class="row mt-4">
+    <div class="col-md-8 offset-md-2">
+        <div id="threats_section" style="display: none;">
+            <div class="card border-danger threats-preview-card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-shield-fill-exclamation"></i> 
+                        Threats Detected by TMT
+                        <span class="badge bg-light text-danger ms-2" id="threats_count_badge">0</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="threats_table_container" class="table-responsive threats-table" style="max-height: 400px; overflow-y: auto;">
+                        <p class="text-muted text-center">Loading threats...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const diagramSelect = document.getElementById('diagram_index');
+    const jsonPreviewSection = document.getElementById('json_preview_section');
+    const jsonPreview = document.getElementById('json_preview');
+    const diagramNameText = document.getElementById('diagram_name_text');
+    const summaryCards = document.getElementById('summary_cards');
+    const dataflowsTable = document.getElementById('dataflows_table');
+    const threatsSection = document.getElementById('threats_section');
+    const threatsTableContainer = document.getElementById('threats_table_container');
+    const threatsCountBadge = document.getElementById('threats_count_badge');
+    
+    // Load JSON for initially selected diagram
+    if (diagramSelect.value) {
+        loadDiagramJson(diagramSelect.value);
+        loadDiagramThreats(diagramSelect.value);
+    }
+    
+    // Load JSON when diagram selection changes
+    diagramSelect.addEventListener('change', function() {
+        loadDiagramJson(this.value);
+        loadDiagramThreats(this.value);
+    });
+    
+    function loadDiagramJson(diagramIndex) {
+        // Show loading state
+        jsonPreviewSection.style.display = 'block';
+        summaryCards.innerHTML = '<div class="col-12"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        dataflowsTable.innerHTML = '<p class="text-muted">Loading...</p>';
+        
+        // Fetch JSON data
+        fetch(`/api/diagram-json/${diagramIndex}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    diagramNameText.textContent = data.diagram_name;
+                    renderDiagramPreview(data.json_data);
+                    jsonPreview.textContent = JSON.stringify(data.json_data, null, 2);
+                } else {
+                    summaryCards.innerHTML = `<div class="col-12"><div class="alert alert-danger">Error: ${data.error}</div></div>`;
+                    dataflowsTable.innerHTML = '';
+                }
+            })
+            .catch(error => {
+                summaryCards.innerHTML = `<div class="col-12"><div class="alert alert-danger">Error loading diagram: ${error.message}</div></div>`;
+                dataflowsTable.innerHTML = '';
+            });
+    }
+    
+    function loadDiagramThreats(diagramIndex) {
+        // Show loading state
+        threatsSection.style.display = 'block';
+        threatsTableContainer.innerHTML = '<p class="text-muted text-center">Loading threats...</p>';
+        
+        // Fetch threats data
+        fetch(`/api/diagram-threats/${diagramIndex}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    threatsCountBadge.textContent = data.threats_count;
+                    renderThreatsTable(data.threats);
+                } else {
+                    threatsTableContainer.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+                }
+            })
+            .catch(error => {
+                threatsTableContainer.innerHTML = `<div class="alert alert-danger">Error loading threats: ${error.message}</div>`;
+            });
+    }
+    
+    function renderThreatsTable(threats) {
+        if (!threats || threats.length === 0) {
+            threatsTableContainer.innerHTML = '<div class="alert alert-info">No threats detected for this diagram.</div>';
+            return;
+        }
+        
+        let tableHTML = `
+            <table class="table table-sm table-striped table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 250px;">DataFlow Name</th>
+                        <th style="width: 150px;">Category</th>
+                        <th>Description</th>                        
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        threats.forEach(threat => {
+            const category = escapeHtml(threat.Category || 'N/A');
+            const description = escapeHtml(threat.Description || 'N/A');
+            const shortDescription = description.length > 100 ? description.substring(0, 100) + '...' : description;
+            const dataflow = escapeHtml(threat.DataFlow || 'N/A');
+            
+            tableHTML += `
+                <tr>
+                    <td><code class="text-primary small">${dataflow}</code></td>
+                    <td><strong>${category}</strong></td>
+                    <td>${shortDescription}</td>                    
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+        
+        threatsTableContainer.innerHTML = tableHTML;
+    }
+    
+    function renderDiagramPreview(jsonData) {
+        // Render summary cards
+        const totalFlows = jsonData.length;
+        const flowsWithBoundaries = jsonData.filter(flow => 
+            flow.trust_boundaries && Object.keys(flow.trust_boundaries).length > 0
+        ).length;
+        
+        summaryCards.innerHTML = `
+            <div class="col-md-4 mb-3">
+                <div class="card text-center border-info summary-card h-100">
+                    <div class="card-body">
+                        <h2 class="text-info mb-2">${totalFlows}</h2>
+                        <p class="card-text text-muted mb-0">
+                            <i class="bi bi-arrow-left-right fs-5"></i><br>
+                            <small>Total Data Flows</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card text-center border-warning summary-card h-100">
+                    <div class="card-body">
+                        <h2 class="text-warning mb-2">${flowsWithBoundaries}</h2>
+                        <p class="card-text text-muted mb-0">
+                            <i class="bi bi-shield-check fs-5"></i><br>
+                            <small>With Trust Boundaries</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card text-center border-success summary-card h-100">
+                    <div class="card-body">
+                        <h2 class="text-success mb-2">${totalFlows - flowsWithBoundaries}</h2>
+                        <p class="card-text text-muted mb-0">
+                            <i class="bi bi-check-circle fs-5"></i><br>
+                            <small>Internal Flows</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Render dataflows table
+        if (jsonData.length === 0) {
+            dataflowsTable.innerHTML = '<div class="alert alert-info">No data flows found in this diagram.</div>';
+            return;
+        }
+        
+        let tableHTML = `
+            <table class="table table-hover table-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 80px;">ID</th>
+                        <th>Data Flow Name</th>
+                        <th>Source</th>
+                        <th><i class="bi bi-arrow-right"></i></th>
+                        <th>Target</th>
+                        
+                        <th>Trust Boundaries</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        jsonData.forEach((flow, index) => {
+            let boundariesHTML = '<span class="text-muted"><em>None</em></span>';
+            if (flow.trust_boundaries && Object.keys(flow.trust_boundaries).length > 0) {
+                const boundaryValues = Object.values(flow.trust_boundaries);
+                boundariesHTML = boundaryValues.map(b => 
+                    `<span class="trust-boundary-badge">${escapeHtml(b)}</span>`
+                ).join(' ');
+            }
+            
+            const dataFlowName = flow.data_flow || 'N/A';
+            const dataFlowDisplay = dataFlowName !== 'N/A' ? `${escapeHtml(dataFlowName)}` : 'N/A';
+            
+            tableHTML += `
+                <tr>
+                    <td><span class="badge bg-secondary">${flow.id || `DFD-${String(index + 1).padStart(3, '0')}`}</span></td>
+                    <td><code class="text-primary">${dataFlowDisplay}</code></td>
+                    <td><strong class="text-dark">${escapeHtml(flow.source)}</strong></td>
+                    <td class="text-center"><i class="bi bi-arrow-right text-primary fs-5"></i></td>
+                    <td><strong class="text-dark">${escapeHtml(flow.target)}</strong></td>                    
+                    <td>${boundariesHTML}</td>
+                </tr>
+            `;
+        });
+        
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+        
+        dataflowsTable.innerHTML = tableHTML;
+    }
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+});
+</script>
+{% endblock %}
+

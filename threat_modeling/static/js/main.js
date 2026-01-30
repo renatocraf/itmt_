@@ -1,0 +1,100 @@
+// Custom JavaScript for Threat Modeling Tool
+
+document.addEventListener('DOMContentLoaded', function() {
+    // File upload drag and drop
+    const uploadArea = document.querySelector('.upload-area');
+    const fileInput = document.querySelector('#tm7_file');
+    
+    if (uploadArea && fileInput) {
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateFileInfo(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                updateFileInfo(e.target.files[0]);
+            }
+        });
+        
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+    }
+    
+    // Update file info display
+    function updateFileInfo(file) {
+        const fileInfo = document.querySelector('.file-info');
+        if (fileInfo) {
+            fileInfo.innerHTML = `
+                <strong>Selected file:</strong> ${file.name}<br>
+                <small>Size: ${(file.size / 1024).toFixed(2)} KB</small>
+            `;
+            fileInfo.style.display = 'block';
+        }
+    }
+    
+    // Show spinner on form submission
+    const forms = document.querySelectorAll('form');
+    forms.forEach(form => {
+        form.addEventListener('submit', function() {
+            const spinner = document.createElement('div');
+            spinner.className = 'spinner-overlay';
+            spinner.innerHTML = `
+                <div class="spinner-border spinner-border-lg text-light" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            `;
+            document.body.appendChild(spinner);
+        });
+    });
+    
+    // Auto-hide alerts after 5 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    });
+    
+    // Toggle API key field based on model selection
+    const modelSelect = document.querySelector('#model');
+    const apiKeyField = document.querySelector('#api_key');
+    const serverIpField = document.querySelector('#server_ip');
+    
+    if (modelSelect && apiKeyField && serverIpField) {
+        function toggleFields() {
+            const selectedModel = modelSelect.value;
+            const apiKeyGroup = apiKeyField.closest('.mb-3');
+            const serverIpGroup = serverIpField.closest('.mb-3');
+            
+            if (selectedModel === 'qwen3:8b') {
+                apiKeyGroup.style.display = 'none';
+                serverIpGroup.style.display = 'block';
+            } else {
+                apiKeyGroup.style.display = 'block';
+                serverIpGroup.style.display = 'none';
+            }
+        }
+        
+        modelSelect.addEventListener('change', toggleFields);
+        toggleFields(); // Initial call
+    }
+});
+

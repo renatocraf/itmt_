@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Configure Analysis - ITA Threat Modeling Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4"><i class="bi bi-robot"></i> AI Threat Analysis</h2>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Analysis Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="analysisForm">
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Step 1: Provider Selection -->
+                    <div class="mb-3">
+                        <label for="provider" class="form-label">
+                            <i class="bi bi-cloud"></i> 1. AI Provider
+                        </label>
+                        {{ form.provider(class="form-select", id="provider") }}
+                        {% if form.provider.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.provider.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">Select the AI provider you want to use</small>
+                    </div>
+                    
+                    <!-- Step 2: API Key -->
+                    <div class="mb-3" id="api_key_group" style="display: none;">
+                        <label for="api_key" class="form-label">
+                            <i class="bi bi-key"></i> 2. API Key
+                        </label>
+                        {{ form.api_key(class="form-control", id="api_key", placeholder="Enter your API key") }}
+                        {% if form.api_key.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.api_key.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">Enter your API key for the selected provider</small>
+                        
+                        <!-- Fetch Models Button -->
+                        <div class="mt-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="fetchModelsBtn" disabled>
+                                <i class="bi bi-search"></i> Find Models
+                            </button>
+                            <span id="fetchStatus" class="ms-2"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3: Model Selection -->
+                    <div class="mb-3" id="model_group" style="display: none;">
+                        <label for="model" class="form-label">
+                            <i class="bi bi-cpu"></i> 3. AI Model
+                        </label>
+                        {{ form.model(class="form-select", id="model", disabled=True) }}
+                        {% if form.model.errors %}
+                            <div class="text-danger small">
+                                {% for error in form.model.errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">Select the model to use for analysis</small>
+                    </div>
+                    
+                    <!-- Prompt Enhancements -->
+                    <div class="mb-3">
+                        <label class="form-label">Prompt Enhancements</label>
+                        <div class="form-check">
+                            {{ form.few_shot(class="form-check-input", id="few_shot") }}
+                            <label class="form-check-label" for="few_shot">
+                                Few Shot
+                            </label>
+                            <small class="form-text text-muted d-block">Add few-shot examples to improve model performance</small>
+                        </div>
+                        <div class="form-check">
+                            {{ form.chain_of_thoughts(class="form-check-input", id="chain_of_thoughts") }}
+                            <label class="form-check-label" for="chain_of_thoughts">
+                                Chain of Thoughts
+                            </label>
+                            <small class="form-text text-muted d-block">Enable step-by-step reasoning for better analysis</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="runAnalysisBtn" disabled>
+                            <i class="bi bi-play-circle"></i> Run AI Analysis
+                        </button>
+                        <small class="form-text text-muted text-center mt-2" id="runAnalysisHint">
+                            Please select a provider, enter API key, fetch models, and select a model to enable analysis
+                        </small>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6>Analysis Info</h6>
+            </div>
+            <div class="card-body">
+                <div class="metric-card mb-2">
+                    <strong>Provider:</strong><br>
+                    <span id="provider_display">Not selected</span>
+                </div>
+                <div class="metric-card mb-2">
+                    <strong>Model:</strong><br>
+                    <span id="model_display">Not selected</span>
+                </div>
+                {% if threat_model_data %}
+                <div class="metric-card mb-2">
+                    <strong>Diagrams:</strong><br>
+                    {{ threat_model_data.num_diagrams }}
+                </div>
+                {% endif %}
+                {% if threat_data %}
+                <div class="metric-card">
+                    <strong>Threats Detected:</strong><br>
+                    {{ threat_model_data.num_threats if threat_model_data else 'N/A' }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const providerSelect = document.getElementById('provider');
+    const apiKeyInput = document.getElementById('api_key');
+    const apiKeyGroup = document.getElementById('api_key_group');
+    const fetchModelsBtn = document.getElementById('fetchModelsBtn');
+    const fetchStatus = document.getElementById('fetchStatus');
+    const modelSelect = document.getElementById('model');
+    const modelGroup = document.getElementById('model_group');
+    const runAnalysisBtn = document.getElementById('runAnalysisBtn');
+    const providerDisplay = document.getElementById('provider_display');
+    const modelDisplay = document.getElementById('model_display');
+    
+    // Function to validate and enable/disable Run Analysis button
+    function validateRunAnalysisButton() {
+        const provider = providerSelect.value && providerSelect.value !== '';
+        const apiKey = apiKeyInput.value.trim();
+        const model = modelSelect.value && modelSelect.value !== '';
+        const modelsLoaded = !modelSelect.disabled && modelSelect.options.length > 1; // More than just placeholder
+        
+        const isValid = provider && apiKey && modelsLoaded && model;
+        
+        runAnalysisBtn.disabled = !isValid;
+        
+        // Update hint message
+        const hintElement = document.getElementById('runAnalysisHint');
+        if (hintElement) {
+            if (!provider) {
+                hintElement.textContent = 'Please select a provider';
+                hintElement.className = 'form-text text-muted text-center mt-2';
+            } else if (!apiKey) {
+                hintElement.textContent = 'Please enter your API key';
+                hintElement.className = 'form-text text-muted text-center mt-2';
+            } else if (!modelsLoaded) {
+                hintElement.textContent = 'Please click "Buscar Modelos" to load available models';
+                hintElement.className = 'form-text text-muted text-center mt-2';
+            } else if (!model) {
+                hintElement.textContent = 'Please select a model from the list';
+                hintElement.className = 'form-text text-muted text-center mt-2';
+            } else {
+                hintElement.textContent = 'Ready to run analysis with ' + model + '!';
+                hintElement.className = 'form-text text-success text-center mt-2';
+            }
+        }
+    }
+    
+    // Handle provider selection
+    providerSelect.addEventListener('change', function() {
+        const provider = this.value;
+        
+        if (provider && provider !== '') {
+            apiKeyGroup.style.display = 'block';
+            providerDisplay.textContent = provider;
+            fetchModelsBtn.disabled = !apiKeyInput.value.trim();
+        } else {
+            apiKeyGroup.style.display = 'none';
+            modelGroup.style.display = 'none';
+            modelSelect.disabled = true;
+            modelSelect.innerHTML = '<option value="">Select provider and fetch models first...</option>';
+            providerDisplay.textContent = 'Not selected';
+            modelDisplay.textContent = 'Not selected';
+        }
+        validateRunAnalysisButton();
+    });
+    
+    // Handle API key input
+    apiKeyInput.addEventListener('input', function() {
+        const hasProvider = providerSelect.value && providerSelect.value !== '';
+        fetchModelsBtn.disabled = !hasProvider || !this.value.trim();
+        validateRunAnalysisButton();
+    });
+    
+    // Fetch models button
+    fetchModelsBtn.addEventListener('click', function() {
+        const provider = providerSelect.value;
+        const apiKey = apiKeyInput.value.trim();
+        
+        if (!provider || !apiKey) {
+            fetchStatus.innerHTML = '<span class="text-danger">Please select provider and enter API key</span>';
+            validateRunAnalysisButton();
+            return;
+        }
+        
+        // Disable button and show loading
+        fetchModelsBtn.disabled = true;
+        fetchStatus.innerHTML = '<span class="text-info"><i class="bi bi-hourglass-split"></i> Fetching models...</span>';
+        
+        // Fetch models
+        fetch('/api/list-models', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                provider: provider,
+                api_key: apiKey
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Populate model select
+                modelSelect.innerHTML = '<option value="">Select a model...</option>';
+                data.models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.id;
+                    option.textContent = model.name || model.id;
+                    modelSelect.appendChild(option);
+                });
+                
+                // Show model select and enable it
+                modelGroup.style.display = 'block';
+                modelSelect.disabled = false;
+                
+                fetchStatus.innerHTML = '<span class="text-success"><i class="bi bi-check-circle"></i> Models loaded</span>';
+                
+                // Clear status after 3 seconds
+                setTimeout(() => {
+                    fetchStatus.innerHTML = '';
+                }, 3000);
+                
+                // Validate button state after models are loaded
+                validateRunAnalysisButton();
+            } else {
+                fetchStatus.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle"></i> ${data.error}</span>`;
+                fetchModelsBtn.disabled = false;
+                validateRunAnalysisButton();
+            }
+        })
+        .catch(error => {
+            fetchStatus.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle"></i> Error: ${error.message}</span>`;
+            fetchModelsBtn.disabled = false;
+            validateRunAnalysisButton();
+        });
+    });
+    
+    // Handle model selection
+    modelSelect.addEventListener('change', function() {
+        const model = this.value;
+        if (model && model !== '') {
+            modelDisplay.textContent = model;
+        } else {
+            modelDisplay.textContent = 'Not selected';
+        }
+        validateRunAnalysisButton();
+    });
+    
+    // Prevent form submission if button is disabled or validation fails
+    document.getElementById('analysisForm').addEventListener('submit', function(e) {
+        if (runAnalysisBtn.disabled) {
+            e.preventDefault();
+            alert('Please complete all required steps: select provider, enter API key, fetch models, and select a model.');
+            return false;
+        }
+        
+        // Additional validation before submit
+        const provider = providerSelect.value;
+        const apiKey = apiKeyInput.value.trim();
+        const model = modelSelect.value;
+        
+        if (!provider || !apiKey || !model) {
+            e.preventDefault();
+            alert('Please ensure provider, API key, and model are all selected.');
+            return false;
+        }
+        
+        // Ensure model is from the loaded list
+        const modelOption = modelSelect.querySelector(`option[value="${model}"]`);
+        if (!modelOption || modelOption.value === '') {
+            e.preventDefault();
+            alert('Please select a valid model from the list.');
+            return false;
+        }
+        
+        // Enable the model select before submission (disabled fields are not submitted)
+        if (modelSelect.disabled) {
+            modelSelect.disabled = false;
+        }
+        
+        // Ensure all fields have the correct name attributes
+        if (!modelSelect.getAttribute('name')) {
+            modelSelect.setAttribute('name', 'model');
+        }
+    });
+    
+    // Initialize display and validation
+    if (providerSelect.value) {
+        providerSelect.dispatchEvent(new Event('change'));
+    }
+    if (modelSelect.value) {
+        modelSelect.dispatchEvent(new Event('change'));
+    }
+    validateRunAnalysisButton();
+});
+</script>
+{% endblock %}

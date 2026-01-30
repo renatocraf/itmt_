@@ -2,18 +2,33 @@ services:
   app:
     build: .
     ports:
-      - "9007:8501"
+      - "9007:5000"
     volumes:
       - ./data:/app/data
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GOOGLE_API_KEY=${GOOGLE_API_KEY}
       - OLLAMA_HOST=${OLLAMA_HOST}
+      - HOST=0.0.0.0
+      - PORT=5000
+      - RAG_CHROMA_HOST=chromadb
+      - RAG_CHROMA_PORT=8000
+    depends_on:
+      - chromadb
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # ONLY FOR GPU
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./nist-data:/data
+    restart: unless-stopped

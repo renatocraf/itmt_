@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+
+{% block title %}Analysis Results - ITA Threat Modeling Tool{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0"><i class="bi bi-graph-up"></i> Analysis Results - <span class="text-primary">{{ model_name }}</span></h2>
+            <a href="{{ url_for('main.compare') }}" class="btn btn-primary">
+                <i class="bi bi-arrow-left-right"></i> Compare with TMT Threats
+            </a>
+        </div>
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle"></i> Analysis completed successfully with <strong>{{ model_name }}</strong>!
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Results Summary</h5>
+                <div>
+                    <a href="{{ url_for('main.download', format_type='json') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-download"></i> Download JSON
+                    </a>
+                    <a href="{{ url_for('main.download', format_type='csv') }}" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-download"></i> Download CSV
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Filter Section -->
+                <div class="mb-3">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="tableFilter" class="form-label">
+                                <i class="bi bi-funnel"></i> Filter Table:
+                            </label>
+                            <input type="text" class="form-control" id="tableFilter" placeholder="Search in all columns...">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="dataflowFilter" class="form-label">
+                                <i class="bi bi-arrow-left-right"></i> DataFlow Name:
+                            </label>
+                            <select class="form-select" id="dataflowFilter">
+                                <option value="">All DataFlows</option>
+                                <!-- DataFlow names will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="categoryFilter" class="form-label">
+                                <i class="bi bi-tag"></i> Category:
+                            </label>
+                            <select class="form-select" id="categoryFilter">
+                                <option value="">All Categories</option>
+                                <!-- Categories will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary w-100" id="clearFilters">
+                                <i class="bi bi-x-circle"></i> Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <span id="filterResultsCount">{{ analysis_df | length }}</span> of {{ analysis_df | length }} results shown
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="table-responsive results-table">
+                    <table class="table table-striped table-hover" id="resultsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>DataFlow Name</th>
+                                <th>Source</th>
+                                <th>Target</th>                                
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Justification</th>
+                                <th>Potential Impact</th>
+                                <th>NIST Controls</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in analysis_df %}
+                            <tr>
+                                <td><code class="text-primary">{{ row.data_flow_name or 'N/A' }}</code></td>
+                                <td>{{ row.interaction_source }}</td>
+                                <td>{{ row.interaction_target }}</td>                                
+                                <td><span class="badge bg-warning text-dark">{{ row.category }}</span></td>
+                                <td>{{ row.description }}</td>
+                                <td>{{ row.justification }}</td>
+                                <td>{{ row.potential_impact }}</td>
+                                <td>
+                                    {% if row.nist_controls_1 %}
+                                        <small>{{ row.nist_controls_1 }}</small><br>
+                                    {% endif %}
+                                    {% if row.nist_controls_2 %}
+                                        <small>{{ row.nist_controls_2 }}</small><br>
+                                    {% endif %}
+                                    {% if row.nist_controls_3 %}
+                                        <small>{{ row.nist_controls_3 }}</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-brain"></i> RAG Enhancement with NIST</h5>
+            </div>
+            <div class="card-body">
+                <p>Enhance the analysis with NIST recommendations using RAG (Retrieval Augmented Generation)</p>
+                
+                <form method="POST" action="{{ url_for('main.rag_enhance') }}">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="k_controls" class="form-label">Quantity of Controls:</label>
+                            <select name="k_controls" id="k_controls" class="form-select">
+                                <option value="3">3</option>
+                                <option value="5" selected>5</option>
+                                <option value="10">10</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8 d-flex align-items-end">
+                            <button type="submit" class="btn btn-secondary">
+                                <i class="bi bi-magic"></i> Enhance with RAG
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if session.get('rag_complete') %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Enhanced Results with NIST RAG</h5>
+                <div>
+                    <a href="{{ url_for('main.download', format_type='rag_json') }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-download"></i> Download Enhanced JSON
+                    </a>
+                    <a href="{{ url_for('main.download', format_type='rag_csv') }}" class="btn btn-sm btn-outline-success">
+                        <i class="bi bi-download"></i> Download Enhanced CSV
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Filter Section -->
+                <div class="mb-3">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="ragTableFilter" class="form-label">
+                                <i class="bi bi-funnel"></i> Filter Table:
+                            </label>
+                            <input type="text" class="form-control" id="ragTableFilter" placeholder="Search in all columns...">
+                        </div>
+                        <div class="col-md-2">
+                            <label for="ragDataflowFilter" class="form-label">
+                                <i class="bi bi-arrow-left-right"></i> DataFlow Name:
+                            </label>
+                            <select class="form-select" id="ragDataflowFilter">
+                                <option value="">All DataFlows</option>
+                                <!-- DataFlow names will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="ragCategoryFilter" class="form-label">
+                                <i class="bi bi-tag"></i> Category:
+                            </label>
+                            <select class="form-select" id="ragCategoryFilter">
+                                <option value="">All Categories</option>
+                                <!-- Categories will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-outline-secondary w-100" id="ragClearFilters">
+                                <i class="bi bi-x-circle"></i> Clear Filters
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            <span id="ragFilterResultsCount">{{ session.get('analysis_df_rag', []) | length }}</span> of {{ session.get('analysis_df_rag', []) | length }} results shown
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="table-responsive results-table">
+                    <table class="table table-striped table-hover" id="ragResultsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>DataFlow Name</th>
+                                <th>Source</th>
+                                <th>Target</th>                                
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>NIST Controls (RAG)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in session.get('analysis_df_rag', []) %}
+                            <tr>
+                                <td><code class="text-primary">{{ row.data_flow_name or 'N/A' }}</code></td>
+                                <td>{{ row.interaction_source }}</td>
+                                <td>{{ row.interaction_target }}</td>                                
+                                <td><span class="badge bg-warning text-dark">{{ row.category }}</span></td>
+                                <td>{{ row.description }}</td>
+                                <td><small>{{ row.rag_nist }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-4">
+    <div class="col-12 text-center">
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+            <i class="bi bi-house"></i> Start New Analysis
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tableFilter = document.getElementById('tableFilter');
+    const dataflowFilter = document.getElementById('dataflowFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    const resultsTable = document.getElementById('resultsTable');
+    const filterResultsCount = document.getElementById('filterResultsCount');
+    const totalRows = resultsTable.querySelectorAll('tbody tr').length;
+    
+    // Populate dataflow filter with unique dataflow names from table
+    const dataflowSet = new Set();
+    const rows = resultsTable.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const dataflowCell = row.querySelectorAll('td')[0]; // DataFlow Name is the 1st column
+        if (dataflowCell) {
+            const dataflowText = dataflowCell.textContent.trim();
+            if (dataflowText && dataflowText !== 'N/A') {
+                dataflowSet.add(dataflowText);
+            }
+        }
+    });
+    
+    // Sort and add dataflows to select
+    const sortedDataflows = Array.from(dataflowSet).sort();
+    sortedDataflows.forEach(df => {
+        const option = document.createElement('option');
+        option.value = df;
+        option.textContent = df;
+        dataflowFilter.appendChild(option);
+    });
+    
+    // Populate category filter with unique categories from table
+    const categorySet = new Set();
+    rows.forEach(row => {
+        const categoryCell = row.querySelectorAll('td')[3]; // Category is the 4th column (DataFlow Name, Source, Target, Category)
+        if (categoryCell) {
+            const categoryText = categoryCell.textContent.trim();
+            if (categoryText) {
+                categorySet.add(categoryText);
+            }
+        }
+    });
+    
+    // Sort and add categories to select
+    const sortedCategories = Array.from(categorySet).sort();
+    sortedCategories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        categoryFilter.appendChild(option);
+    });
+    
+    function filterTable() {
+        const searchText = tableFilter.value.toLowerCase();
+        const dataflowValue = dataflowFilter.value.toLowerCase();
+        const categoryValue = categoryFilter.value.toLowerCase();
+        let visibleCount = 0;
+        
+        const rows = resultsTable.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            let matchesSearch = true;
+            let matchesDataflow = true;
+            let matchesCategory = true;
+            
+            // Check search filter (all columns)
+            if (searchText) {
+                matchesSearch = false;
+                cells.forEach(cell => {
+                    if (cell.textContent.toLowerCase().includes(searchText)) {
+                        matchesSearch = true;
+                    }
+                });
+            }
+            
+            // Check dataflow filter
+            if (dataflowValue) {
+                const dataflowCell = cells[0]; // DataFlow Name is the 1st column
+                matchesDataflow = dataflowCell.textContent.toLowerCase().includes(dataflowValue);
+            }
+            
+            // Check category filter
+            if (categoryValue) {
+                const categoryCell = cells[3]; // Category is the 4th column (DataFlow Name, Source, Target, Category)
+                matchesCategory = categoryCell.textContent.toLowerCase().includes(categoryValue);
+            }
+            
+            // Show/hide row based on filters
+            if (matchesSearch && matchesDataflow && matchesCategory) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update results count
+        filterResultsCount.textContent = visibleCount;
+        
+        // Highlight search terms
+        if (searchText) {
+            highlightSearchTerms(searchText);
+        } else {
+            removeHighlights();
+        }
+    }
+    
+    function highlightSearchTerms(searchText) {
+        const rows = resultsTable.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            if (row.style.display !== 'none') {
+                const cells = row.querySelectorAll('td');
+                cells.forEach(cell => {
+                    const originalText = cell.getAttribute('data-original') || cell.innerHTML;
+                    if (!cell.getAttribute('data-original')) {
+                        cell.setAttribute('data-original', originalText);
+                    }
+                    
+                    if (searchText && originalText.toLowerCase().includes(searchText)) {
+                        const regex = new RegExp(`(${searchText})`, 'gi');
+                        cell.innerHTML = originalText.replace(regex, '<mark>$1</mark>');
+                    }
+                });
+            }
+        });
+    }
+    
+    function removeHighlights() {
+        const rows = resultsTable.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            cells.forEach(cell => {
+                const originalText = cell.getAttribute('data-original');
+                if (originalText) {
+                    cell.innerHTML = originalText;
+                }
+            });
+        });
+    }
+    
+    function clearFilters() {
+        tableFilter.value = '';
+        dataflowFilter.value = '';
+        categoryFilter.value = '';
+        filterTable();
+    }
+    
+    // Event listeners
+    tableFilter.addEventListener('input', filterTable);
+    dataflowFilter.addEventListener('change', filterTable);
+    categoryFilter.addEventListener('change', filterTable);
+    clearFiltersBtn.addEventListener('click', clearFilters);
+    
+    // Initialize
+    filterTable();
+    
+    // RAG Table Filters
+    const ragTableFilter = document.getElementById('ragTableFilter');
+    const ragDataflowFilter = document.getElementById('ragDataflowFilter');
+    const ragCategoryFilter = document.getElementById('ragCategoryFilter');
+    const ragClearFiltersBtn = document.getElementById('ragClearFilters');
+    const ragResultsTable = document.getElementById('ragResultsTable');
+    const ragFilterResultsCount = document.getElementById('ragFilterResultsCount');
+    
+    // Only initialize RAG filters if the table exists
+    if (ragResultsTable) {
+        const ragTotalRows = ragResultsTable.querySelectorAll('tbody tr').length;
+        
+        // Populate RAG dataflow filter with unique dataflow names from table
+        const ragDataflowSet = new Set();
+        const ragRows = ragResultsTable.querySelectorAll('tbody tr');
+        ragRows.forEach(row => {
+            const dataflowCell = row.querySelectorAll('td')[0]; // DataFlow Name is the 1st column
+            if (dataflowCell) {
+                const dataflowText = dataflowCell.textContent.trim();
+                if (dataflowText && dataflowText !== 'N/A') {
+                    ragDataflowSet.add(dataflowText);
+                }
+            }
+        });
+        
+        // Sort and add dataflows to select
+        const sortedRagDataflows = Array.from(ragDataflowSet).sort();
+        sortedRagDataflows.forEach(df => {
+            const option = document.createElement('option');
+            option.value = df;
+            option.textContent = df;
+            ragDataflowFilter.appendChild(option);
+        });
+        
+        // Populate RAG category filter with unique categories from table
+        const ragCategorySet = new Set();
+        ragRows.forEach(row => {
+            const categoryCell = row.querySelectorAll('td')[3]; // Category is the 4th column (DataFlow Name, Source, Target, Category)
+            if (categoryCell) {
+                const categoryText = categoryCell.textContent.trim();
+                if (categoryText) {
+                    ragCategorySet.add(categoryText);
+                }
+            }
+        });
+        
+        // Sort and add categories to select
+        const sortedRagCategories = Array.from(ragCategorySet).sort();
+        sortedRagCategories.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat;
+            ragCategoryFilter.appendChild(option);
+        });
+        
+        function filterRagTable() {
+            const searchText = ragTableFilter.value.toLowerCase();
+            const dataflowValue = ragDataflowFilter.value.toLowerCase();
+            const categoryValue = ragCategoryFilter.value.toLowerCase();
+            let visibleCount = 0;
+            
+            const rows = ragResultsTable.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                let matchesSearch = true;
+                let matchesDataflow = true;
+                let matchesCategory = true;
+                
+                // Check search filter (all columns)
+                if (searchText) {
+                    matchesSearch = false;
+                    cells.forEach(cell => {
+                        if (cell.textContent.toLowerCase().includes(searchText)) {
+                            matchesSearch = true;
+                        }
+                    });
+                }
+                
+                // Check dataflow filter
+                if (dataflowValue) {
+                    const dataflowCell = cells[0]; // DataFlow Name is the 1st column
+                    matchesDataflow = dataflowCell.textContent.toLowerCase().includes(dataflowValue);
+                }
+                
+                // Check category filter
+                if (categoryValue) {
+                    const categoryCell = cells[3]; // Category is the 4th column (DataFlow Name, Source, Target, Category)
+                    matchesCategory = categoryCell.textContent.toLowerCase().includes(categoryValue);
+                }
+                
+                // Show/hide row based on filters
+                if (matchesSearch && matchesDataflow && matchesCategory) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update results count
+            ragFilterResultsCount.textContent = visibleCount;
+            
+            // Highlight search terms
+            if (searchText) {
+                highlightRagSearchTerms(searchText);
+            } else {
+                removeRagHighlights();
+            }
+        }
+        
+        function highlightRagSearchTerms(searchText) {
+            const rows = ragResultsTable.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                if (row.style.display !== 'none') {
+                    const cells = row.querySelectorAll('td');
+                    cells.forEach(cell => {
+                        const originalText = cell.getAttribute('data-original') || cell.innerHTML;
+                        if (!cell.getAttribute('data-original')) {
+                            cell.setAttribute('data-original', originalText);
+                        }
+                        
+                        if (searchText && originalText.toLowerCase().includes(searchText)) {
+                            const regex = new RegExp(`(${searchText})`, 'gi');
+                            cell.innerHTML = originalText.replace(regex, '<mark>$1</mark>');
+                        }
+                    });
+                }
+            });
+        }
+        
+        function removeRagHighlights() {
+            const rows = ragResultsTable.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                cells.forEach(cell => {
+                    const originalText = cell.getAttribute('data-original');
+                    if (originalText) {
+                        cell.innerHTML = originalText;
+                    }
+                });
+            });
+        }
+        
+        function clearRagFilters() {
+            ragTableFilter.value = '';
+            ragDataflowFilter.value = '';
+            ragCategoryFilter.value = '';
+            filterRagTable();
+        }
+        
+        // Event listeners for RAG filters
+        ragTableFilter.addEventListener('input', filterRagTable);
+        ragDataflowFilter.addEventListener('change', filterRagTable);
+        ragCategoryFilter.addEventListener('change', filterRagTable);
+        ragClearFiltersBtn.addEventListener('click', clearRagFilters);
+        
+        // Initialize RAG filters
+        filterRagTable();
+    }
+});
+</script>
+{% endblock %}
+
